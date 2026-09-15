@@ -3,20 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
   <title>Voice Translator</title>
 
   <style>
     body {
       font-family: Arial, sans-serif;
+      background: #f4f4f4;
       margin: 0;
       padding: 20px;
-      background: #f4f4f4;
       text-align: center;
     }
 
     .box {
-      max-width: 520px;
+      max-width: 500px;
       margin: 30px auto;
       padding: 25px;
       background: white;
@@ -24,12 +23,7 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    h1 {
-      margin-bottom: 8px;
-    }
-
-    select,
-    button {
+    select, button {
       width: 100%;
       padding: 14px;
       margin-top: 12px;
@@ -47,7 +41,6 @@
       border: none;
       background: #222;
       color: white;
-      cursor: pointer;
     }
 
     button:disabled {
@@ -56,7 +49,7 @@
 
     #status {
       margin-top: 15px;
-      font-size: 14px;
+      font-size: 15px;
     }
 
     #result {
@@ -72,180 +65,163 @@
 
 <body>
 
-<div class="box">
+  <div class="box">
 
-  <h1>🎙️ Voice Translator</h1>
+    <h1>🎙️ Voice Translator</h1>
 
-  <p>Speak and see your words as text.</p>
+    <p>Speak and hear your voice.</p>
 
-  <select id="language">
-    <option value="en-IN">English</option>
-    <option value="hi-IN">Hindi</option>
-    <option value="or-IN">Odia</option>
-  </select>
+    <select id="language">
+      <option value="en-IN">English</option>
+      <option value="hi-IN">Hindi</option>
+      <option value="or-IN">Odia</option>
+    </select>
 
-  <button id="speakButton" onclick="startListening()">
-    🎤 Speak
-  </button>
+    <button id="speakButton">
+      🎤 Speak
+    </button>
 
-  <div id="status">
-    Ready
+    <div id="status">
+      Ready
+    </div>
+
+    <div id="result">
+      Your speech will appear here...
+    </div>
+
+    <button id="playButton">
+      🔊 Play Voice
+    </button>
+
   </div>
 
-  <div id="result">
-    Your speech will appear here...
-  </div>
+  <script>
 
-  <button onclick="speakText()">
-    🔊 Play Voice
-  </button>
+    const SpeechRecognition =
+      window.SpeechRecognition ||
+      window.webkitSpeechRecognition;
 
-</div>
+    const speakButton =
+      document.getElementById("speakButton");
 
-<script>
+    const playButton =
+      document.getElementById("playButton");
 
-const SpeechRecognition =
-  window.SpeechRecognition ||
-  window.webkitSpeechRecognition;
+    const language =
+      document.getElementById("language");
 
-let recognition = null;
-let lastText = "";
+    const status =
+      document.getElementById("status");
 
-const statusBox = document.getElementById("status");
-const resultBox = document.getElementById("result");
-const speakButton = document.getElementById("speakButton");
+    const result =
+      document.getElementById("result");
 
-if (!SpeechRecognition) {
+    let lastText = "";
 
-  statusBox.innerText =
-    "❌ Speech recognition is not supported in this browser.";
+    if (!SpeechRecognition) {
 
-  speakButton.disabled = true;
+      status.innerText =
+        "❌ Speech recognition is not supported in this browser.";
 
-} else {
-
-  recognition = new SpeechRecognition();
-
-  recognition.continuous = false;
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 1;
-
-  recognition.onstart = function() {
-
-    statusBox.innerText =
-      "🎤 Listening... Speak now.";
-
-    speakButton.innerText =
-      "🎤 Listening...";
-  };
-
-  recognition.onresult = function(event) {
-
-    const text =
-      event.results[0][0].transcript;
-
-    lastText = text;
-
-    resultBox.innerText = text;
-
-    statusBox.innerText =
-      "✅ Speech detected.";
-
-    speakButton.innerText =
-      "🎤 Speak";
-  };
-
-  recognition.onerror = function(event) {
-
-    console.log("Speech error:", event.error);
-
-    speakButton.innerText =
-      "🎤 Speak";
-
-    if (event.error === "not-allowed") {
-
-      statusBox.innerText =
-        "❌ Microphone permission is blocked.";
-
-    } else if (event.error === "no-speech") {
-
-      statusBox.innerText =
-        "❌ No speech detected. Speak louder and try again.";
-
-    } else if (event.error === "network") {
-
-      statusBox.innerText =
-        "❌ Speech service/network problem. Check internet.";
+      speakButton.disabled = true;
 
     } else {
 
-      statusBox.innerText =
-        "❌ Speech error: " + event.error;
+      const recognition = new SpeechRecognition();
+
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+
+      speakButton.onclick = function () {
+
+        recognition.lang = language.value;
+
+        status.innerText =
+          "🎤 Starting microphone...";
+
+        result.innerText =
+          "Listening...";
+
+        try {
+
+          recognition.start();
+
+        } catch (error) {
+
+          status.innerText =
+            "⚠️ Please wait 2 seconds and try again.";
+
+        }
+      };
+
+      recognition.onstart = function () {
+
+        status.innerText =
+          "🎤 Listening... Speak now.";
+
+        speakButton.innerText =
+          "🎤 Listening...";
+
+      };
+
+      recognition.onresult = function (event) {
+
+        lastText =
+          event.results[0][0].transcript;
+
+        result.innerText =
+          lastText;
+
+        status.innerText =
+          "✅ Speech detected.";
+
+        speakButton.innerText =
+          "🎤 Speak";
+
+      };
+
+      recognition.onerror = function (event) {
+
+        speakButton.innerText =
+          "🎤 Speak";
+
+        status.innerText =
+          "❌ Error: " + event.error;
+
+      };
+
+      recognition.onend = function () {
+
+        speakButton.innerText =
+          "🎤 Speak";
+
+      };
     }
-  };
 
-  recognition.onend = function() {
+    playButton.onclick = function () {
 
-    speakButton.innerText =
-      "🎤 Speak";
-  };
-}
+      if (!lastText) {
 
-function startListening() {
+        status.innerText =
+          "Nothing to play yet.";
 
-  if (!recognition) {
-    return;
-  }
+        return;
+      }
 
-  const selectedLanguage =
-    document.getElementById("language").value;
+      const voice =
+        new SpeechSynthesisUtterance(lastText);
 
-  recognition.lang = selectedLanguage;
+      voice.lang =
+        language.value;
 
-  resultBox.innerText =
-    "Listening...";
+      speechSynthesis.cancel();
 
-  statusBox.innerText =
-    "Starting microphone...";
+      speechSynthesis.speak(voice);
 
-  try {
+    };
 
-    recognition.start();
-
-  } catch (error) {
-
-    console.log(error);
-
-    statusBox.innerText =
-      "Please wait a moment and try again.";
-  }
-}
-
-function speakText() {
-
-  if (!lastText) {
-
-    statusBox.innerText =
-      "Nothing to play yet.";
-
-    return;
-  }
-
-  const selectedLanguage =
-    document.getElementById("language").value;
-
-  const speech =
-    new SpeechSynthesisUtterance(lastText);
-
-  speech.lang = selectedLanguage;
-
-  speechSynthesis.cancel();
-  speechSynthesis.speak(speech);
-}
-
-</script>
+  </script>
 
 </body>
 </html>
-
-  
