@@ -1,1 +1,134 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Voice Translator</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 20px;
+      background: #f5f5f5;
+      text-align: center;
+    }
+
+    .box {
+      max-width: 500px;
+      margin: 30px auto;
+      background: white;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    }
+
+    h1 {
+      margin-bottom: 10px;
+    }
+
+    select, button {
+      width: 100%;
+      padding: 14px;
+      margin-top: 12px;
+      border-radius: 10px;
+      font-size: 16px;
+    }
+
+    button {
+      border: none;
+      background: #222;
+      color: white;
+    }
+
+    #result {
+      margin-top: 20px;
+      padding: 15px;
+      background: #eee;
+      border-radius: 10px;
+      min-height: 50px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="box">
+
+    <h1>🎙️ Voice Translator</h1>
+
+    <p>Speak in one language and translate your message.</p>
+
+    <select id="language">
+      <option value="en-IN">English</option>
+      <option value="hi-IN">Hindi</option>
+      <option value="or-IN">Odia</option>
+    </select>
+
+    <button onclick="startListening()">🎤 Speak</button>
+
+    <div id="result">
+      Your speech will appear here...
+    </div>
+
+    <button onclick="speakText()">🔊 Play Voice</button>
+
+  </div>
+
+<script>
+
+let lastText = "";
+
+function startListening() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    document.getElementById("result").innerText =
+      "Speech recognition is not supported in this browser.";
+    return;
+  }
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang =
+    document.getElementById("language").value;
+
+  recognition.interimResults = false;
+
+  recognition.onresult = function(event) {
+
+    lastText = event.results[0][0].transcript;
+
+    document.getElementById("result").innerText =
+      lastText;
+  };
+
+  recognition.onerror = function() {
+
+    document.getElementById("result").innerText =
+      "Could not hear you. Please try again.";
+  };
+
+  recognition.start();
+}
+
+function speakText() {
+
+  if (!lastText) return;
+
+  const speech = new SpeechSynthesisUtterance(lastText);
+
+  speech.lang =
+    document.getElementById("language").value;
+
+  speechSynthesis.speak(speech);
+}
+
+</script>
+
+</body>
+</html>
