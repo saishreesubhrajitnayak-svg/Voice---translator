@@ -1,40 +1,42 @@
-<!DOCTYPE html>
+    <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Voice Translator</title>
+  <title>VaaniSetu</title>
 
   <style>
     body {
       font-family: Arial, sans-serif;
       background: #f4f4f4;
-      margin: 0;
       padding: 20px;
-      text-align: center;
     }
 
     .box {
       max-width: 500px;
-      margin: 30px auto;
-      padding: 25px;
+      margin: auto;
       background: white;
+      padding: 25px;
       border-radius: 20px;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
 
-    select, button {
+    h1 {
+      text-align: center;
+    }
+
+    select, textarea, button {
       width: 100%;
       padding: 14px;
       margin-top: 12px;
+      box-sizing: border-box;
       border-radius: 10px;
       font-size: 16px;
-      box-sizing: border-box;
     }
 
-    select {
+    textarea {
+      height: 120px;
       border: 1px solid #ccc;
-      background: white;
     }
 
     button {
@@ -43,185 +45,102 @@
       color: white;
     }
 
-    button:disabled {
-      opacity: 0.5;
-    }
-
-    #status {
-      margin-top: 15px;
-      font-size: 15px;
-    }
-
-    #result {
+    #output {
       margin-top: 20px;
       padding: 15px;
       background: #eee;
       border-radius: 10px;
       min-height: 50px;
-      text-align: left;
+    }
+
+    #status {
+      text-align: center;
+      margin-top: 15px;
     }
   </style>
 </head>
 
 <body>
 
-  <div class="box">
+<div class="box">
 
-    <h1>🎙️ Voice Translator</h1>
+  <h1>🌉 VaaniSetu</h1>
 
-    <p>Speak and hear your voice.</p>
+  <p style="text-align:center;">
+    Voice Translation Platform
+  </p>
 
-    <select id="language">
-      <option value="en-IN">English</option>
-      <option value="hi-IN">Hindi</option>
-      <option value="or-IN">Odia</option>
-    </select>
+  <select id="from">
+    <option value="or">ଓଡ଼ିଆ</option>
+    <option value="en">English</option>
+    <option value="hi">हिन्दी</option>
+  </select>
 
-    <button id="speakButton">
-      🎤 Speak
-    </button>
+  <select id="to">
+    <option value="en">English</option>
+    <option value="or">ଓଡ଼ିଆ</option>
+    <option value="hi">हिन्दी</option>
+  </select>
 
-    <div id="status">
-      Ready
-    </div>
+  <textarea id="input"
+    placeholder="Type your message here..."></textarea>
 
-    <div id="result">
-      Your speech will appear here...
-    </div>
+  <button onclick="translateText()">
+    🌐 Translate
+  </button>
 
-    <button id="playButton">
-      🔊 Play Voice
-    </button>
+  <div id="status">Ready</div>
 
+  <div id="output">
+    Translation will appear here...
   </div>
 
-  <script>
+</div>
 
-    const SpeechRecognition =
-      window.SpeechRecognition ||
-      window.webkitSpeechRecognition;
+<script>
 
-    const speakButton =
-      document.getElementById("speakButton");
+async function translateText() {
 
-    const playButton =
-      document.getElementById("playButton");
+  const text =
+    document.getElementById("input").value.trim();
 
-    const language =
-      document.getElementById("language");
+  const from =
+    document.getElementById("from").value;
 
-    const status =
-      document.getElementById("status");
+  const to =
+    document.getElementById("to").value;
 
-    const result =
-      document.getElementById("result");
+  const output =
+    document.getElementById("output");
 
-    let lastText = "";
+  const status =
+    document.getElementById("status");
 
-    if (!SpeechRecognition) {
+  if (!text) {
+    status.innerText =
+      "⚠️ Please type something first.";
+    return;
+  }
 
-      status.innerText =
-        "❌ Speech recognition is not supported in this browser.";
+  status.innerText =
+    "🔄 Translation system starting...";
 
-      speakButton.disabled = true;
+  /*
+    Real translation API will be connected
+    here in the next backend step.
+  */
 
-    } else {
+  output.innerText =
+    "Backend connection required.";
 
-      const recognition = new SpeechRecognition();
+  status.innerText =
+    "⚙️ Frontend ready.";
 
-      recognition.continuous = false;
-      recognition.interimResults = false;
-      recognition.maxAlternatives = 1;
+}
 
-      speakButton.onclick = function () {
-
-        recognition.lang = language.value;
-
-        status.innerText =
-          "🎤 Starting microphone...";
-
-        result.innerText =
-          "Listening...";
-
-        try {
-
-          recognition.start();
-
-        } catch (error) {
-
-          status.innerText =
-            "⚠️ Please wait 2 seconds and try again.";
-
-        }
-      };
-
-      recognition.onstart = function () {
-
-        status.innerText =
-          "🎤 Listening... Speak now.";
-
-        speakButton.innerText =
-          "🎤 Listening...";
-
-      };
-
-      recognition.onresult = function (event) {
-
-        lastText =
-          event.results[0][0].transcript;
-
-        result.innerText =
-          lastText;
-
-        status.innerText =
-          "✅ Speech detected.";
-
-        speakButton.innerText =
-          "🎤 Speak";
-
-      };
-
-      recognition.onerror = function (event) {
-
-        speakButton.innerText =
-          "🎤 Speak";
-
-        status.innerText =
-          "❌ Error: " + event.error;
-
-      };
-
-      recognition.onend = function () {
-
-        speakButton.innerText =
-          "🎤 Speak";
-
-      };
-    }
-
-    playButton.onclick = function () {
-
-      if (!lastText) {
-
-        status.innerText =
-          "Nothing to play yet.";
-
-        return;
-      }
-
-      const voice =
-        new SpeechSynthesisUtterance(lastText);
-
-      voice.lang =
-        language.value;
-
-      speechSynthesis.cancel();
-
-      speechSynthesis.speak(voice);
-
-    };
-
-  </script>
+</script>
 
 </body>
 </html>
+
+  
