@@ -1,86 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NAYQO</title>
 
-    const url =
-      "https://api.mymemory.translated.net/get?q=" +
-      encodeURIComponent(text) +
-      "&langpair=" +
-      from +
-      "|" +
-      to;
+<style>
+body{
+  margin:0;
+  padding:20px;
+  font-family:Arial,sans-serif;
+  background:#f4f4f4;
+}
 
-    const response =
-      await fetch(url);
+.box{
+  max-width:500px;
+  margin:auto;
+  background:white;
+  padding:25px;
+  border-radius:20px;
+  box-shadow:0 5px 20px #ddd;
+}
 
-    const data =
-      await response.json();
+h1{
+  text-align:center;
+  margin-bottom:5px;
+}
 
-    if(
-      data.responseData &&
-      data.responseData.translatedText
-    ){
+.tagline{
+  text-align:center;
+  color:#666;
+}
 
-      output.innerText =
-        data.responseData.translatedText;
+select,textarea,button{
+  width:100%;
+  box-sizing:border-box;
+  padding:14px;
+  margin-top:12px;
+  border-radius:10px;
+  font-size:16px;
+}
 
-      status.innerText =
-        "✅ Translation complete";
+textarea{
+  height:120px;
+  resize:none;
+}
 
-    }else{
+button{
+  border:0;
+  color:white;
+  background:#111;
+}
 
-      output.innerText =
-        "Translation failed.";
+.speak{
+  background:#16823b;
+}
 
-      status.innerText =
-        "❌ Error";
-    }
+.play{
+  background:#1769ff;
+}
 
-  }catch(error){
+.reverse{
+  background:#7b2cff;
+}
 
-    output.innerText =
-      "Network error.";
+#status{
+  text-align:center;
+  margin-top:15px;
+}
 
-    status.innerText =
-      "❌ Error";
-  }
+#output{
+  margin-top:20px;
+  padding:15px;
+  background:#eee;
+  border-radius:10px;
+  min-height:50px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="box">
+
+<h1>⚡ NAYQO</h1>
+
+<p class="tagline">
+Speak. Translate. Connect.
+</p>
+
+<select id="from">
+<option value="en">English</option>
+<option value="hi">हिन्दी</option>
+</select>
+
+<select id="to">
+<option value="hi">हिन्दी</option>
+<option value="en">English</option>
+</select>
+
+<textarea id="input"
+placeholder="Speak or type here..."></textarea>
+
+<button class="speak" onclick="startListening()">
+🎙️ Speak
+</button>
+
+<button onclick="translateText()">
+🌐 Translate
+</button>
+
+<button class="play" onclick="speakTranslation()">
+🔊 Play Translation
+</button>
+
+<button class="reverse" onclick="reverseLanguages()">
+🔄 Reverse Conversation
+</button>
+
+<div id="status">
+Ready
+</div>
+
+<div id="output">
+Translation will appear here...
+</div>
+
+</div>
+
+<script>
+
+let recognition;
+
+function startListening(){
+
+const SpeechRecognition =
+window.SpeechRecognition ||
+window.webkitSpeechRecognition;
+
+if(!SpeechRecognition){
+document.getElementById("status").innerText =
+"❌ Speech recognition not supported";
+return;
+}
+
+recognition = new SpeechRecognition();
+
+const lang =
+document.getElementById("from").value;
+
+recognition.lang =
+lang === "en" ? "en-IN" : "hi-IN";
+
+recognition.continuous = false;
+recognition.interimResults = false;
+
+recognition.onstart = function(){
+document.getElementById("status").innerText =
+"🎙️ Listening...";
+};
+
+recognition.onresult = function(event){
+
+const text =
+event.results[0][0].transcript;
+
+document.getElementById("input").value = text;
+
+document.getElementById("status").innerText =
+"✅ Speech captured";
+};
+
+recognition.onerror = function(event){
+
+document.getElementById("status").innerText =
+"❌ Speech error: " + event.error;
+};
+
+recognition.start();
+}
+
+
+async function translateText(){
+
+const text =
+document.getElementById("input").value.trim();
+
+const from =
+document.getElementById("from").value;
+
+const to =
+document.getElementById("to").value;
+
+const output =
+document.getElementById("output");
+
+const status =
+document.getElementById("status");
+
+if(!text){
+status.innerText =
+"⚠️ Speak or type something";
+return;
+}
+
+status.innerText =
+"🔄 Translating...";
+
+try{
+
+const url =
+"https://api.mymemory.translated.net/get?q=" +
+encodeURIComponent(text) +
+"&langpair=" + from + "|" + to;
+
+const response =
+await fetch(url);
+
+const data =
+await response.json();
+
+if(data.responseData){
+
+output.innerText =
+data.responseData.translatedText;
+
+status.innerText =
+"✅ Translation complete";
+
+}else{
+
+status.innerText =
+"❌ Translation failed";
+}
+
+}catch(error){
+
+status.innerText =
+"❌ Network error";
+}
 }
 
 
 function speakTranslation(){
 
-  const text =
-    document.getElementById("output").innerText;
+const text =
+document.getElementById("output").innerText;
 
-  if(
-    !text ||
-    text === "Translation will appear here..."
-  ){
+if(!text ||
+text === "Translation will appear here..."){
 
-    document.getElementById("status").innerText =
-      "⚠️ First translate something.";
+document.getElementById("status").innerText =
+"⚠️ Translate something first";
 
-    return;
-  }
+return;
+}
 
-  const utterance =
-    new SpeechSynthesisUtterance(text);
+const lang =
+document.getElementById("to").value;
 
-  const language =
-    document.getElementById("to").value;
+const voice =
+new SpeechSynthesisUtterance(text);
 
-  if(language === "en"){
-    utterance.lang = "en-IN";
-  }
-  else if(language === "hi"){
-    utterance.lang = "hi-IN";
-  }
-  else{
-    utterance.lang = "or-IN";
-  }
+voice.lang =
+lang === "en" ? "en-IN" : "hi-IN";
 
-  speechSynthesis.cancel();
-  speechSynthesis.speak(utterance);
+speechSynthesis.cancel();
+speechSynthesis.speak(voice);
 
-  document.getElementById("status").innerText =
-    "🔊 Playing translation...";
+document.getElementById("status").innerText =
+"🔊 Playing translation...";
+}
+
+
+function reverseLanguages(){
+
+const from =
+document.getElementById("from");
+
+const to =
+document.getElementById("to");
+
+const old =
+from.value;
+
+from.value =
+to.value;
+
+to.value =
+old;
+
+document.getElementById("input").value = "";
+
+document.getElementById("output").innerText =
+"Translation will appear here...";
+
+document.getElementById("status").innerText =
+"🔄 Direction reversed";
 }
 
 </script>
