@@ -4,80 +4,309 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>NAYQO</title>
+
 <style>
-body{font-family:Arial,sans-serif;background:#f4f4f4;padding:20px}
-.box{max-width:500px;margin:auto;background:white;padding:25px;border-radius:20px}
-h1{text-align:center}
-select,textarea,button{width:100%;padding:14px;margin-top:12px;box-sizing:border-box;border-radius:10px;font-size:16px}
-textarea{height:120px}
-button{border:none;background:#222;color:white}
-#output{margin-top:20px;padding:15px;background:#eee;border-radius:10px;min-height:50px}
-#status{text-align:center;margin-top:15px}
+body{
+  font-family:Arial,sans-serif;
+  background:#f4f4f4;
+  padding:20px;
+}
+
+.box{
+  max-width:500px;
+  margin:auto;
+  background:white;
+  padding:25px;
+  border-radius:20px;
+  box-shadow:0 5px 20px rgba(0,0,0,.08);
+}
+
+h1{
+  text-align:center;
+  margin-bottom:5px;
+}
+
+.tagline{
+  text-align:center;
+  color:#666;
+}
+
+select,textarea,button{
+  width:100%;
+  padding:14px;
+  margin-top:12px;
+  box-sizing:border-box;
+  border-radius:10px;
+  font-size:16px;
+}
+
+textarea{
+  height:120px;
+  resize:none;
+}
+
+button{
+  border:none;
+  background:#111;
+  color:white;
+  cursor:pointer;
+}
+
+.speak{
+  background:#16823b;
+}
+
+.voice{
+  background:#1769ff;
+}
+
+#status{
+  text-align:center;
+  margin-top:15px;
+}
+
+#output{
+  margin-top:20px;
+  padding:15px;
+  background:#eee;
+  border-radius:10px;
+  min-height:50px;
+}
 </style>
 </head>
 
 <body>
+
 <div class="box">
+
 <h1>⚡ NAYQO</h1>
-<p style="text-align:center">Speak. Translate. Connect.</p>
+
+<p class="tagline">Speak. Translate. Connect.</p>
 
 <select id="from">
-<option value="or">ଓଡ଼ିଆ</option>
-<option value="en">English</option>
-<option value="hi">हिन्दୀ</option>
+  <option value="or">ଓଡ଼ିଆ</option>
+  <option value="en">English</option>
+  <option value="hi">हिन्दୀ</option>
 </select>
 
 <select id="to">
-<option value="en">English</option>
-<option value="or">ଓଡ଼ିଆ</option>
-<option value="hi">हिन्दୀ</option>
+  <option value="en">English</option>
+  <option value="or">ଓଡ଼ିଆ</option>
+  <option value="hi">हिन्दୀ</option>
 </select>
 
 <textarea id="input" placeholder="ଏଠାରେ ଲେଖନ୍ତୁ..."></textarea>
 
-<button onclick="translateText()">🌐 Translate</button>
+<button class="speak" onclick="startListening()">
+🎙️ Speak
+</button>
+
+<button onclick="translateText()">
+🌐 Translate
+</button>
+
+<button class="voice" onclick="speakTranslation()">
+🔊 Play Translation
+</button>
 
 <div id="status">Ready</div>
-<div id="output">Translation will appear here...</div>
+
+<div id="output">
+Translation will appear here...
+</div>
+
 </div>
 
 <script>
-async function translateText(){
-  const text=document.getElementById("input").value.trim();
-  const from=document.getElementById("from").value;
-  const to=document.getElementById("to").value;
-  const output=document.getElementById("output");
-  const status=document.getElementById("status");
 
-  if(!text){
-    status.innerText="⚠️ କିଛି text ଲେଖନ୍ତୁ।";
+let recognition;
+
+function startListening(){
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  if(!SpeechRecognition){
+    document.getElementById("status").innerText =
+      "❌ Speech recognition is not supported.";
     return;
   }
 
-  status.innerText="🔄 Translating...";
-  output.innerText="";
+  recognition = new SpeechRecognition();
+
+  const language =
+    document.getElementById("from").value;
+
+  if(language === "en"){
+    recognition.lang = "en-IN";
+  }
+  else if(language === "hi"){
+    recognition.lang = "hi-IN";
+  }
+  else{
+    recognition.lang = "or-IN";
+  }
+
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = function(){
+    document.getElementById("status").innerText =
+      "🎙️ Listening...";
+  };
+
+  recognition.onresult = function(event){
+
+    const transcript =
+      event.results[0][0].transcript;
+
+    document.getElementById("input").value =
+      transcript;
+
+    document.getElementById("status").innerText =
+      "✅ Speech captured";
+  };
+
+  recognition.onerror = function(event){
+
+    document.getElementById("status").innerText =
+      "❌ Speech error: " + event.error;
+  };
+
+  recognition.onend = function(){
+
+    if(
+      document.getElementById("status").innerText ===
+      "🎙️ Listening..."
+    ){
+      document.getElementById("status").innerText =
+        "Ready";
+    }
+
+  };
+
+  recognition.start();
+}
+
+
+async function translateText(){
+
+  const text =
+    document.getElementById("input").value.trim();
+
+  const from =
+    document.getElementById("from").value;
+
+  const to =
+    document.getElementById("to").value;
+
+  const output =
+    document.getElementById("output");
+
+  const status =
+    document.getElementById("status");
+
+  if(!text){
+
+    status.innerText =
+      "⚠️ କିଛି text କହନ୍ତୁ କିମ୍ବା ଲେଖନ୍ତୁ।";
+
+    return;
+  }
+
+  status.innerText =
+    "🔄 Translating...";
+
+  output.innerText = "";
 
   try{
-    const url="https://api.mymemory.translated.net/get?q="+
-      encodeURIComponent(text)+"&langpair="+from+"|"+to;
 
-    const response=await fetch(url);
-    const data=await response.json();
+    const url =
+      "https://api.mymemory.translated.net/get?q=" +
+      encodeURIComponent(text) +
+      "&langpair=" +
+      from +
+      "|" +
+      to;
 
-    if(data.responseData && data.responseData.translatedText){
-      output.innerText=data.responseData.translatedText;
-      status.innerText="✅ Translation complete";
+    const response =
+      await fetch(url);
+
+    const data =
+      await response.json();
+
+    if(
+      data.responseData &&
+      data.responseData.translatedText
+    ){
+
+      output.innerText =
+        data.responseData.translatedText;
+
+      status.innerText =
+        "✅ Translation complete";
+
     }else{
-      output.innerText="Translation failed.";
-      status.innerText="❌ Error";
+
+      output.innerText =
+        "Translation failed.";
+
+      status.innerText =
+        "❌ Error";
     }
+
   }catch(error){
-    output.innerText="Network error.";
-    status.innerText="❌ Error";
+
+    output.innerText =
+      "Network error.";
+
+    status.innerText =
+      "❌ Error";
   }
 }
+
+
+function speakTranslation(){
+
+  const text =
+    document.getElementById("output").innerText;
+
+  if(
+    !text ||
+    text === "Translation will appear here..."
+  ){
+
+    document.getElementById("status").innerText =
+      "⚠️ First translate something.";
+
+    return;
+  }
+
+  const utterance =
+    new SpeechSynthesisUtterance(text);
+
+  const language =
+    document.getElementById("to").value;
+
+  if(language === "en"){
+    utterance.lang = "en-IN";
+  }
+  else if(language === "hi"){
+    utterance.lang = "hi-IN";
+  }
+  else{
+    utterance.lang = "or-IN";
+  }
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
+
+  document.getElementById("status").innerText =
+    "🔊 Playing translation...";
+}
+
 </script>
+
 </body>
 </html>
-
-  
