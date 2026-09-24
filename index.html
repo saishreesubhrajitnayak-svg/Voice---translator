@@ -1,102 +1,320 @@
-if(!text){
-status.innerText =
-"⚠️ Speak or type something";
-return;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NAYQO - Voice Translator</title>
+</head>
+
+<body style="margin:0;background:#f4f4f4;font-family:Arial,sans-serif;">
+
+  <div style="max-width:500px;margin:30px auto;padding:25px;background:white;border-radius:20px;box-shadow:0 5px 20px #ddd;">
+
+    <h1 style="text-align:center;margin:0;">
+      ⚡ NAYQO
+    </h1>
+
+    <p style="text-align:center;color:#666;">
+      Speak. Translate. Connect.
+    </p>
+
+    <select id="from"
+      style="width:100%;padding:14px;margin-top:12px;border:1px solid #ccc;border-radius:10px;font-size:16px;">
+      <option value="en">English</option>
+      <option value="hi">हिन्दी</option>
+    </select>
+
+    <select id="to"
+      style="width:100%;padding:14px;margin-top:12px;border:1px solid #ccc;border-radius:10px;font-size:16px;">
+      <option value="hi">हिन्दी</option>
+      <option value="en">English</option>
+    </select>
+
+    <textarea id="input"
+      placeholder="Speak or type here..."
+      style="width:100%;height:120px;margin-top:12px;padding:14px;border:1px solid #ccc;border-radius:10px;font-size:16px;resize:none;box-sizing:border-box;"></textarea>
+
+    <button onclick="startListening()"
+      style="width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;background:#16823b;color:white;font-size:16px;">
+      🎙️ Speak
+    </button>
+
+    <button onclick="translateText()"
+      style="width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;background:#111;color:white;font-size:16px;">
+      🌐 Translate
+    </button>
+
+    <button onclick="speakTranslation()"
+      style="width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;background:#1769ff;color:white;font-size:16px;">
+      🔊 Play Translation
+    </button>
+
+    <button onclick="reverseLanguages()"
+      style="width:100%;padding:14px;margin-top:12px;border:0;border-radius:10px;background:#7b2cff;color:white;font-size:16px;">
+      🔄 Reverse Conversation
+    </button>
+
+    <div id="status"
+      style="text-align:center;margin-top:15px;color:#555;">
+      Ready
+    </div>
+
+    <div id="output"
+      style="margin-top:20px;padding:15px;background:#eee;border-radius:10px;min-height:50px;line-height:1.5;">
+      Translation will appear here...
+    </div>
+
+  </div>
+
+<script>
+
+let recognition = null;
+
+
+/* VOICE INPUT */
+
+function startListening() {
+
+  const SpeechRecognition =
+    window.SpeechRecognition ||
+    window.webkitSpeechRecognition;
+
+  const status =
+    document.getElementById("status");
+
+  if (!SpeechRecognition) {
+
+    status.innerText =
+      "❌ Speech recognition is not supported.";
+
+    return;
+  }
+
+  recognition = new SpeechRecognition();
+
+  const from =
+    document.getElementById("from").value;
+
+  recognition.lang =
+    from === "en" ? "en-IN" : "hi-IN";
+
+  recognition.continuous = false;
+  recognition.interimResults = false;
+
+  recognition.onstart = function() {
+
+    status.innerText =
+      "🎙️ Listening...";
+
+  };
+
+  recognition.onresult = function(event) {
+
+    const text =
+      event.results[0][0].transcript;
+
+    document.getElementById("input").value =
+      text;
+
+    status.innerText =
+      "✅ Speech captured";
+
+  };
+
+  recognition.onerror = function(event) {
+
+    status.innerText =
+      "❌ Speech error: " + event.error;
+
+  };
+
+  try {
+
+    recognition.start();
+
+  } catch (error) {
+
+    status.innerText =
+      "❌ Microphone could not start.";
+
+  }
+
 }
 
-status.innerText =
-"🔄 Translating...";
 
-try{
+/* TRANSLATION */
 
-const url =
-"https://api.mymemory.translated.net/get?q=" +
-encodeURIComponent(text) +
-"&langpair=" + from + "|" + to;
+async function translateText() {
 
-const response =
-await fetch(url);
+  const input =
+    document.getElementById("input");
 
-const data =
-await response.json();
+  const output =
+    document.getElementById("output");
 
-if(data.responseData){
+  const status =
+    document.getElementById("status");
 
-output.innerText =
-data.responseData.translatedText;
+  const from =
+    document.getElementById("from").value;
 
-status.innerText =
-"✅ Translation complete";
+  const to =
+    document.getElementById("to").value;
 
-}else{
+  const text =
+    input.value.trim();
 
-status.innerText =
-"❌ Translation failed";
+  if (!text) {
+
+    status.innerText =
+      "⚠️ Speak or type something first.";
+
+    return;
+  }
+
+  if (from === to) {
+
+    output.innerText = text;
+
+    status.innerText =
+      "✅ Same language.";
+
+    return;
+  }
+
+  status.innerText =
+    "🔄 Translating...";
+
+  try {
+
+    const url =
+      "https://api.mymemory.translated.net/get?q=" +
+      encodeURIComponent(text) +
+      "&langpair=" +
+      from +
+      "|" +
+      to;
+
+    const response =
+      await fetch(url);
+
+    if (!response.ok) {
+
+      throw new Error("Request failed");
+
+    }
+
+    const data =
+      await response.json();
+
+    if (
+      data &&
+      data.responseData &&
+      data.responseData.translatedText
+    ) {
+
+      output.innerText =
+        data.responseData.translatedText;
+
+      status.innerText =
+        "✅ Translation complete.";
+
+    } else {
+
+      output.innerText =
+        "No translation received.";
+
+      status.innerText =
+        "❌ Translation failed.";
+
+    }
+
+  } catch (error) {
+
+    console.error(error);
+
+    output.innerText =
+      "Translation unavailable.";
+
+    status.innerText =
+      "❌ Network error.";
+
+  }
+
 }
 
-}catch(error){
 
-status.innerText =
-"❌ Network error";
+/* VOICE OUTPUT */
+
+function speakTranslation() {
+
+  const output =
+    document.getElementById("output");
+
+  const status =
+    document.getElementById("status");
+
+  const text =
+    output.innerText.trim();
+
+  if (
+    !text ||
+    text === "Translation will appear here..." ||
+    text === "Translation unavailable."
+  ) {
+
+    status.innerText =
+      "⚠️ Translate something first.";
+
+    return;
+  }
+
+  const to =
+    document.getElementById("to").value;
+
+  const voice =
+    new SpeechSynthesisUtterance(text);
+
+  voice.lang =
+    to === "en" ? "en-IN" : "hi-IN";
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(voice);
+
+  status.innerText =
+    "🔊 Playing translation...";
+
 }
-}
 
 
-function speakTranslation(){
+/* REVERSE */
 
-const text =
-document.getElementById("output").innerText;
+function reverseLanguages() {
 
-if(!text ||
-text === "Translation will appear here..."){
+  const from =
+    document.getElementById("from");
 
-document.getElementById("status").innerText =
-"⚠️ Translate something first";
+  const to =
+    document.getElementById("to");
 
-return;
-}
+  const old =
+    from.value;
 
-const lang =
-document.getElementById("to").value;
+  from.value =
+    to.value;
 
-const voice =
-new SpeechSynthesisUtterance(text);
+  to.value =
+    old;
 
-voice.lang =
-lang === "en" ? "en-IN" : "hi-IN";
+  document.getElementById("input").value =
+    "";
 
-speechSynthesis.cancel();
-speechSynthesis.speak(voice);
+  document.getElementById("output").innerText =
+    "Translation will appear here...";
 
-document.getElementById("status").innerText =
-"🔊 Playing translation...";
-}
+  document.getElementById("status").innerText =
+    "🔄 Direction reversed.";
 
-
-function reverseLanguages(){
-
-const from =
-document.getElementById("from");
-
-const to =
-document.getElementById("to");
-
-const old =
-from.value;
-
-from.value =
-to.value;
-
-to.value =
-old;
-
-document.getElementById("input").value = "";
-
-document.getElementById("output").innerText =
-"Translation will appear here...";
-
-document.getElementById("status").innerText =
-"🔄 Direction reversed";
 }
 
 </script>
